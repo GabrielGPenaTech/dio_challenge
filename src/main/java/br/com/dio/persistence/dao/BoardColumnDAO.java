@@ -1,5 +1,6 @@
 package br.com.dio.persistence.dao;
 
+import br.com.dio.dto.BoardColumnDTO;
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardColumnType;
 import lombok.AllArgsConstructor;
@@ -54,6 +55,39 @@ public class BoardColumnDAO {
             }
 
             return list;
+        }
+    }
+
+    public List<BoardColumnDTO> findByBoardIdWithDetails(final Long id) throws SQLException {
+        List<BoardColumnDTO> dtos = new ArrayList<>();
+        var query = """
+                    SELECT
+                        bc.id,
+                        bc.name,
+                        bc.type,
+                        COUNT(c.id) AS cards_quantity
+                    FROM boards_column bc
+                    LEFT JOIN cards c ON c.board_column_id = bc.id
+                    WHERE bc.id = ?
+                    GROUP BY bc.id, bc.name, bc.type
+                """;
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeQuery();
+            var resultSet = preparedStatement.getResultSet();
+            while (resultSet.next()) {
+                var dto = new BoardColumnDTO(
+                        resultSet.getLong("bc.id"),
+                        resultSet.getString("bc.name"),
+                        BoardColumnType.findByName(resultSet.getString("bc.type")),
+                        resultSet.getInt("cards_quantity")
+                );
+
+                dtos.add(dto);
+            }
+
+            return dtos;
         }
     }
 }

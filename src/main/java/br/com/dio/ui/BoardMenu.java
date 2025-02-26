@@ -2,9 +2,13 @@ package br.com.dio.ui;
 
 
 import br.com.dio.persistence.entity.BoardEntity;
+import br.com.dio.service.BoardQueryService;
 import lombok.AllArgsConstructor;
 
+import java.sql.SQLException;
 import java.util.Scanner;
+
+import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
 
 @AllArgsConstructor
 public class BoardMenu {
@@ -12,7 +16,7 @@ public class BoardMenu {
     private final Scanner scanner = new Scanner(System.in);
     private final BoardEntity boardEntity;
 
-    public void execute() {
+    public void execute() throws SQLException {
         System.out.printf("Bem vindo ao board %s, selecione a operação desejada: ", boardEntity.getId());
         var option = -1;
         while (option != 9) {
@@ -60,7 +64,18 @@ public class BoardMenu {
     private void cancelCard() {
     }
 
-    private void showBoard() {
+    private void showBoard() throws SQLException {
+        try (var connection = getConnection()) {
+            var optional = new BoardQueryService(connection).showBoardDetails(boardEntity.getId());
+
+            optional.ifPresent(board -> {
+                System.out.printf("Board [%s, %s]\n", board.id(), board.name());
+                board.columns().forEach(column -> {
+                    System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", column.name(), column.type(), column.cardsQuantity());
+                });
+            });
+
+        }
     }
 
     private void showColumn() {
