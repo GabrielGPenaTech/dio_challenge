@@ -18,7 +18,7 @@ public class BoardColumnDAO {
             preparedStatement.setString(1, boardColumnEntity.getName());
             preparedStatement.setString(2, boardColumnEntity.getType().name());
             preparedStatement.setInt(3, boardColumnEntity.getOrder());
-            preparedStatement.setLong(4, boardColumnEntity.getBoardEntity().getId());
+            preparedStatement.setLong(4, boardColumnEntity.getBoard().getId());
             preparedStatement.executeUpdate();
 
             if (preparedStatement.getUpdateCount() == 0) {
