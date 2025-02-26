@@ -13,7 +13,7 @@ public class BoardDAO {
 
     private Connection connection;
 
-    private BoardEntity insert(final BoardEntity boardEntity) throws SQLException {
+    public BoardEntity insert(final BoardEntity boardEntity) throws SQLException {
         var query = "INSER INTO board (name) VALUES (?)";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, boardEntity.getName());
@@ -27,7 +27,7 @@ public class BoardDAO {
         }
     }
 
-    private void delete(final Long id) throws SQLException {
+    public void delete(final Long id) throws SQLException {
         var query = "DELETE FROM boards WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setLong(1, id);
@@ -35,7 +35,7 @@ public class BoardDAO {
         }
     }
 
-    private Optional<BoardEntity> findById(final Long id) throws SQLException {
+    public Optional<BoardEntity> findById(final Long id) throws SQLException {
         var query = "SELECT id, name FROM boards WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setLong(1, id);
@@ -53,7 +53,7 @@ public class BoardDAO {
         }
     }
 
-    private boolean exists(final Long id) throws SQLException {
+    public boolean exists(final Long id) throws SQLException {
         var query = "SELECT 1 FROM boards WHERE id = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setLong(1, id);
