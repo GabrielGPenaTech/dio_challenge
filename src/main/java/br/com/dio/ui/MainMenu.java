@@ -26,6 +26,7 @@ public class MainMenu {
             System.out.println("3 - Excluir um board");
             System.out.println("4 - Sair");
             option = scanner.nextInt();
+            scanner.nextLine();
 
             switch (option) {
                 case 1 -> createBoard();
@@ -40,10 +41,12 @@ public class MainMenu {
     private void createBoard() throws SQLException {
         var board = new BoardEntity();
         System.out.println("Digite o nome do titulo do board: ");
-        board.setName(scanner.nextLine());
+        var name = scanner.nextLine();
+        board.setName(name);
 
         System.out.println("Seu board terá mais do que as 3 colunas padrão ? se sim informe quantas, se não digite '0'");
         var quantityExtraColumns = scanner.nextInt();
+        scanner.nextLine();
 
         List<BoardColumnEntity> boardColumns = new ArrayList<>();
 
@@ -52,21 +55,21 @@ public class MainMenu {
         var initialColumn =  createBoardColumn(firstColumnName, 0, BoardColumnType.INITIAL);
         boardColumns.add(initialColumn);
 
-        for(int i = 0; i < quantityExtraColumns; i++) {
+        for(int i = 1; i <= quantityExtraColumns; i++) {
             System.out.println("Informe o nome da coluna de tarefa pendente: ");
             var pendingColumnName = scanner.nextLine();
-            var pendingColumn =  createBoardColumn(pendingColumnName, i++, BoardColumnType.INITIAL);
+            var pendingColumn =  createBoardColumn(pendingColumnName, i++, BoardColumnType.PENDING);
             boardColumns.add(pendingColumn);
         }
 
         System.out.println("Informe o nome da coluna final do board: ");
         var finalColumnName = scanner.nextLine();
-        var finalColumn =  createBoardColumn(finalColumnName, quantityExtraColumns + 1, BoardColumnType.INITIAL);
+        var finalColumn =  createBoardColumn(finalColumnName, quantityExtraColumns + 1, BoardColumnType.FINAL);
         boardColumns.add(finalColumn);
 
         System.out.println("Informe o nome da coluna de cancelamento: ");
         var cancelColumnName = scanner.nextLine();
-        var cancelColumn =  createBoardColumn(cancelColumnName, quantityExtraColumns + 2, BoardColumnType.INITIAL);
+        var cancelColumn =  createBoardColumn(cancelColumnName, quantityExtraColumns + 2, BoardColumnType.CANCEL);
         boardColumns.add(cancelColumn);
         board.setColumns(boardColumns);
 
