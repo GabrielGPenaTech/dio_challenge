@@ -2,6 +2,7 @@ package br.com.dio.service;
 
 import br.com.dio.dto.BoardColumnInfoDTO;
 import br.com.dio.exception.CardBlockedException;
+import br.com.dio.exception.CardCanceledException;
 import br.com.dio.exception.CardFinishedException;
 import br.com.dio.exception.EntityNotFoundException;
 import br.com.dio.persistence.dao.CardDAO;
@@ -34,20 +35,7 @@ public class CardService {
     public void moveToNextColumn(final Long cardId, final Long boardId ,final List<BoardColumnInfoDTO> boardColumnsInfo) throws SQLException {
         try {
             var dao = new CardDAO(connection);
-            var optional = dao.findById(cardId, boardId);
-            var dto = optional.orElseThrow(() -> new EntityNotFoundException("Card not found"));
-
-            if (dto.blocked()) {
-                throw new CardBlockedException("Card is blocked");
-            }
-
-            var currentColumn = boardColumnsInfo.stream().filter(column ->
-                    column.id().equals(dto.columnId()))
-                    .findFirst().orElseThrow(() -> new EntityNotFoundException("Column not found"));
-
-            if (currentColumn.columnType().equals(BoardColumnType.FINAL)) {
-                throw new CardFinishedException("Card is final");
-            }
+            var currentColumn = isPossibleToMove(cardId, boardId, boardColumnsInfo, dao);
 
             var nextColumn = boardColumnsInfo.stream().filter(column ->
                     column.order() == currentColumn.order() + 1)
@@ -61,5 +49,52 @@ public class CardService {
             connection.rollback();
             throw ex;
         }
+    }
+
+    public void cancel(
+            final Long cardId,
+            final Long boardId ,
+            final List<BoardColumnInfoDTO> boardColumnsInfo,
+            final Long cancelColumnId
+    ) throws SQLException {
+        try {
+            var dao = new CardDAO(connection);
+             var currentColumn = isPossibleToMove(cardId, boardId, boardColumnsInfo, dao);
+
+            if (currentColumn.columnType().equals(BoardColumnType.CANCEL)) {
+                throw new CardCanceledException("Card is already cancelled");
+            }
+
+            dao.moveToColumn(cardId, cancelColumnId);
+            connection.commit();
+
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        }
+    }
+
+    private BoardColumnInfoDTO isPossibleToMove(
+            Long cardId,
+            Long boardId,
+            List<BoardColumnInfoDTO> boardColumnsInfo,
+            CardDAO dao
+    ) throws SQLException {
+        var optional = dao.findById(cardId, boardId);
+        var dto = optional.orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+        if (dto.blocked()) {
+            throw new CardBlockedException("Card is blocked");
+        }
+
+        var currentColumn = boardColumnsInfo.stream().filter(column ->
+                        column.id().equals(dto.columnId()))
+                .findFirst().orElseThrow(() -> new EntityNotFoundException("Column not found"));
+
+        if (currentColumn.columnType().equals(BoardColumnType.FINAL)) {
+            throw new CardFinishedException("Card is final");
+        }
+
+        return currentColumn;
     }
 }
