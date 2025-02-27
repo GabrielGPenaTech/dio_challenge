@@ -5,6 +5,7 @@ import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.service.BoardColumnQueryService;
 import br.com.dio.service.BoardQueryService;
+import br.com.dio.service.CardQueryService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -103,7 +104,29 @@ public class BoardMenu {
         }
     }
 
-    private void showCard() {
+    private void showCard() throws SQLException {
+        System.out.println("Informe o id do card que deseja visualizar: ");
+        var selectedCardId = scanner.nextLong();
+
+        try (var connection = getConnection()){
+            var resultService = new CardQueryService(connection).findById(selectedCardId);
+            resultService.ifPresentOrElse(card -> {
+                    System.out.printf("""
+                            Card %s - %s
+                            Descrição: %s
+                            """, card.id(), card.title(), card.description());
+                    System.out.println(card.blocked() ?
+                            "Está bloqueado. Motivo: " + card.blockReason() :
+                            "Não está bloqueado.");
+                    System.out.printf("""
+                            Já foi bloqueado %s vezes
+                            Está no momento na coluna %s - %s
+                            """, card.blocksAmount(), card.columnId(), card.columnName());
+                },
+                () -> System.out.printf("Não existe um card com id %s\n", selectedCardId)
+            );
+        }
+
     }
 
 }

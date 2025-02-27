@@ -66,12 +66,11 @@ public class BoardColumnDAO {
                     SELECT
                         bc.id,
                         bc.name,
+                        bc."order",
                         bc.type,
-                        COUNT(c.id) AS cards_quantity
+                        (SELECT COUNT(id) FROM cards WHERE board_column_id = bc.id) AS cards_quantity
                     FROM boards_column bc
-                    LEFT JOIN cards c ON c.board_column_id = bc.id
                     WHERE bc.id = ?
-                    GROUP BY bc.id, bc.name, bc.type
                 """;
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
