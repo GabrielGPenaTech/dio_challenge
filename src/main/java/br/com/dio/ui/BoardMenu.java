@@ -3,9 +3,11 @@ package br.com.dio.ui;
 
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
+import br.com.dio.persistence.entity.CardEntity;
 import br.com.dio.service.BoardColumnQueryService;
 import br.com.dio.service.BoardQueryService;
 import br.com.dio.service.CardQueryService;
+import br.com.dio.service.CardService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -20,7 +22,7 @@ public class BoardMenu {
     private final BoardEntity boardEntity;
 
     public void execute() throws SQLException {
-        System.out.printf("Bem vindo ao board %s, selecione a operação desejada: ", boardEntity.getId());
+        System.out.printf("Bem vindo ao board %s, selecione a operação desejada: \n", boardEntity.getId());
         var option = -1;
         while (option != 9) {
             System.out.println("1 - Criar um card");
@@ -52,7 +54,17 @@ public class BoardMenu {
         }
     }
 
-    private void createCard() {
+    private void createCard() throws SQLException {
+        var card = new CardEntity();
+        System.out.println("Digite o nome do titulo do card: ");
+        card.setTitle(scanner.nextLine());
+        System.out.println("Informe a descrição do card");
+        card.setDescription(scanner.nextLine());
+        card.setBoardColumn(boardEntity.getInitialColumn());
+
+        try (var connection = getConnection()) {
+            new CardService(connection).insert(card);
+        }
     }
 
     private void moveCardToNestColumn() {
@@ -73,9 +85,9 @@ public class BoardMenu {
 
             optional.ifPresent(board -> {
                 System.out.printf("Board [%s, %s]\n", board.id(), board.name());
-                board.columns().forEach(column -> {
-                    System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", column.name(), column.type(), column.cardsQuantity());
-                });
+                board.columns().forEach(column ->
+                        System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n",
+                                column.name(), column.type(), column.cardsQuantity()));
             });
 
         }
@@ -87,7 +99,7 @@ public class BoardMenu {
         while (!columnsIds.contains(selectedColumn)) {
             System.out.printf("Escolha uma coluna do board %s\n", boardEntity.getName());
             boardEntity.getColumns().forEach(column ->
-                    System.out.printf("%s - %s [%s]", column.getId(), column.getName(), column.getType())
+                    System.out.printf("%s - %s [%s]\n", column.getId(), column.getName(), column.getType())
             );
             selectedColumn = scanner.nextLong();
         }
@@ -96,10 +108,17 @@ public class BoardMenu {
             var columnEntity = new BoardColumnQueryService(connection).findById(selectedColumn);
             columnEntity.ifPresent(column -> {
                 System.out.printf("Coluna %s tipo %s\n", column.getName(), column.getType());
-                column.getCards().forEach(card ->
-                        System.out.printf("Card %s - %s\nDescrição: %s",
-                                card.getId(), card.getTitle() ,card.getDescription())
-                );
+
+                if (column.getCards().isEmpty()) {
+                    System.out.println("-------");
+                    System.out.println("Não há cards na coluna!\n");
+                } else {
+                    column.getCards().forEach(card ->
+                            System.out.printf("Card %s - %s\nDescrição: %s\n",
+                                    card.getId(), card.getTitle() ,card.getDescription())
+                    );
+                }
+
             });
         }
     }
@@ -109,7 +128,7 @@ public class BoardMenu {
         var selectedCardId = scanner.nextLong();
 
         try (var connection = getConnection()){
-            var resultService = new CardQueryService(connection).findById(selectedCardId);
+            var resultService = new CardQueryService(connection).findById(selectedCardId, boardEntity.getId());
             resultService.ifPresentOrElse(card -> {
                     System.out.printf("""
                             Card %s - %s

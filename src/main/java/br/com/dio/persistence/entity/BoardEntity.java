@@ -15,4 +15,10 @@ public class BoardEntity {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<BoardColumnEntity> columns = new ArrayList<>();
+
+    public BoardColumnEntity getInitialColumn() {
+        return columns.stream().filter(column ->
+                column.getType().equals(BoardColumnType.INITIAL))
+                .findFirst().orElseThrow();
+    }
 }

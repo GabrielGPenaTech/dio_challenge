@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
+
 @AllArgsConstructor
 public class BoardColumnDAO {
 
@@ -70,7 +72,7 @@ public class BoardColumnDAO {
                         bc.type,
                         (SELECT COUNT(id) FROM cards WHERE board_column_id = bc.id) AS cards_quantity
                     FROM boards_column bc
-                    WHERE bc.id = ?
+                    WHERE bc.board_id = ?
                 """;
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -79,9 +81,9 @@ public class BoardColumnDAO {
             var resultSet = preparedStatement.getResultSet();
             while (resultSet.next()) {
                 var dto = new BoardColumnDTO(
-                        resultSet.getLong("bc.id"),
-                        resultSet.getString("bc.name"),
-                        BoardColumnType.findByName(resultSet.getString("bc.type")),
+                        resultSet.getLong("id"),
+                        resultSet.getString("name"),
+                        BoardColumnType.findByName(resultSet.getString("type")),
                         resultSet.getInt("cards_quantity")
                 );
 
@@ -97,7 +99,7 @@ public class BoardColumnDAO {
         var query = """
                 SELECT bc.name, bc.type, c.id, c.title, c.description
                 FROM boards_column bc
-                INNER JOIN cards c ON c.board_column_id = bc.id
+                LEFT JOIN cards c ON c.board_column_id = bc.id
                 WHERE bc.id = ?
             """;
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -107,14 +109,18 @@ public class BoardColumnDAO {
 
             if (resultSet.next()) {
                 var boardColumnEntity = new BoardColumnEntity();
-                boardColumnEntity.setName(resultSet.getString("bc.name"));
-                boardColumnEntity.setType(BoardColumnType.findByName(resultSet.getString("bc.type")));
+                boardColumnEntity.setName(resultSet.getString("name"));
+                boardColumnEntity.setType(BoardColumnType.findByName(resultSet.getString("type")));
 
                 do {
+                    if (isNull(resultSet.getArray("title"))) {
+                        break;
+                    }
+
                     var card = new CardEntity();
-                    card.setId(resultSet.getLong("c.id"));
-                    card.setTitle(resultSet.getString("c.title"));
-                    card.setDescription(resultSet.getString("c.description"));
+                    card.setId(resultSet.getLong("id"));
+                    card.setTitle(resultSet.getString("title"));
+                    card.setDescription(resultSet.getString("description"));
                     boardColumnEntity.getCards().add(card);
                 } while (resultSet.next());
 

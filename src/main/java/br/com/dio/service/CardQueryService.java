@@ -14,8 +14,8 @@ public class CardQueryService {
     private final Connection connection;
 
 
-    public Optional<CardDetailsDTO> findById(Long id) throws SQLException {
+    public Optional<CardDetailsDTO> findById(Long id, Long boardId) throws SQLException {
         var dao = new CardDAO(connection);
-        return dao.findById(id);
+        return dao.findById(id, boardId);
     }
 }
