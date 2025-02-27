@@ -51,7 +51,7 @@ public class CardService {
 
             var nextColumn = boardColumnsInfo.stream().filter(column ->
                     column.order() == currentColumn.order() + 1)
-                    .findFirst().orElseThrow(() -> new EntityNotFoundException("Next column not found"));
+                    .findFirst().orElseThrow(() -> new EntityNotFoundException("The card is cancelled"));
 
 
             dao.moveToColumn(cardId, nextColumn.id());
