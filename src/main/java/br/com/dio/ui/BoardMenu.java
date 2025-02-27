@@ -1,6 +1,7 @@
 package br.com.dio.ui;
 
 
+import br.com.dio.dto.BoardColumnInfoDTO;
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.persistence.entity.CardEntity;
@@ -67,7 +68,18 @@ public class BoardMenu {
         }
     }
 
-    private void moveCardToNestColumn() {
+    private void moveCardToNestColumn() throws SQLException {
+        System.out.println("Infome o id do card que deseja mover para próxima coluna");
+        var cardId = scanner.nextLong();
+        var boardsColumnsInfo = boardEntity.getColumns().stream().map(column ->
+                new BoardColumnInfoDTO(column.getId(), column.getOrder(), column.getType())
+        ).toList();
+
+        try (var connection = getConnection()) {
+            new CardService(connection).moveToNextColumn(cardId, boardEntity.getId(), boardsColumnsInfo);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     private void blockCard() {
@@ -110,8 +122,7 @@ public class BoardMenu {
                 System.out.printf("Coluna %s tipo %s\n", column.getName(), column.getType());
 
                 if (column.getCards().isEmpty()) {
-                    System.out.println("-------");
-                    System.out.println("Não há cards na coluna!\n");
+                    System.out.println("------- Não há cards na coluna!\n");
                 } else {
                     column.getCards().forEach(card ->
                             System.out.printf("Card %s - %s\nDescrição: %s\n",
