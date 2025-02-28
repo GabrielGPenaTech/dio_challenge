@@ -71,13 +71,32 @@ public class CardService {
             final String reason,
             final List<BoardColumnInfoDTO> boardColumnsInfo
     ) throws SQLException {
-
         try {
             var dao = new CardDAO(connection);
             var blockDao = new BlockDAO(connection);
             var currentColumn = isPossibleToMove(cardId, boardId, boardColumnsInfo, dao);
 
             blockDao.insert(reason, cardId);
+            connection.commit();
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        }
+    }
+
+    public void unblock(final Long cardId, final Long boardId, String reason) throws SQLException {
+        try {
+            var dao = new CardDAO(connection);
+            var blockDao = new BlockDAO(connection);
+
+            var optional = dao.findById(cardId, boardId);
+            var dto = optional.orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+            if (!dto.blocked()) {
+                throw new CardBlockedException("Card is not blocked");
+            }
+
+            blockDao.unblockCard(reason, cardId);
             connection.commit();
         } catch (SQLException ex) {
             connection.rollback();
@@ -109,7 +128,6 @@ public class CardService {
         if (currentColumn.columnType().equals(BoardColumnType.CANCEL)) {
             throw new CardCancelledException("Action not possible because card is cancelled");
         }
-
 
         return currentColumn;
     }

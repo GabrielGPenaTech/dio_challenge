@@ -100,6 +100,17 @@ public class BoardMenu {
     }
 
     private void unblockCard() throws SQLException {
+        System.out.println("Informe o id do card que será desbloqueado:");
+        var cardId = scanner.nextLong();
+        scanner.nextLine();
+        System.out.println("Qual motivo do desbloqueio: ");
+        var unblockReason = scanner.nextLine();
+
+        try (var connection = getConnection()) {
+            new CardService(connection).unblock(cardId, boardEntity.getId(), unblockReason);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     private void cancelCard() throws SQLException {
