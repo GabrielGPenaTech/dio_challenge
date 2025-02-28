@@ -1,6 +1,6 @@
 ## Projeto de Board para Gerenciamento de Tarefas
 
-Desenvolva um código que cria um board customizável para acompanhamento de tarefas.
+Board customizável para acompanhamento de tarefas.
 
 ### Requisitos
 
